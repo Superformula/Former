@@ -63,7 +63,7 @@ public final class Former: NSObject {
     }
     
     /// controller associated to Former
-    weak var owner: UIViewController?
+    public weak var owner: UIViewController?
     public convenience init(owner: UIViewController, tableView: UITableView) {
         self.init(tableView: tableView)
         self.owner = owner
