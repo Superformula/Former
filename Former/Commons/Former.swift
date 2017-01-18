@@ -62,6 +62,13 @@ public final class Former: NSObject {
         return rowFormers.last
     }
     
+    /// controller associated to Former
+    weak var owner: UIViewController?
+    public convenience init(owner: UIViewController, tableView: UITableView) {
+        self.init(tableView: tableView)
+        self.owner = owner
+    }
+    
     public init(tableView: UITableView) {
         super.init()
         self.tableView = tableView
