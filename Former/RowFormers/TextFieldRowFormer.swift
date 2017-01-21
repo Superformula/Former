@@ -143,4 +143,19 @@ private class Observer<T: UITableViewCell>: NSObject, UITextFieldDelegate where 
         }
         return !textFieldRowFormer.returnToNextRow
     }
+
+    fileprivate dynamic func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
+
+        // fix for preventing text field clear on begin
+        // editing when `secureTextEntry` is enabled
+        if let original = textField.text {
+            let startIndex = original.index(original.startIndex, offsetBy:range.location);
+            let endIndex = original.index(startIndex, offsetBy:range.length);
+            textField.text = original.replacingCharacters(in: startIndex..<endIndex, with: string)
+        } else {
+            textField.text = string;
+        }
+
+        return false
+    }
 }
