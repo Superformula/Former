@@ -25,6 +25,7 @@ open class TextViewRowFormer<T: UITableViewCell>
     
     open var text: String?
     open var placeholder: String?
+    open var maximumCharactersCount: Int?
     open var attributedPlaceholder: NSAttributedString?
     open var textDisabledColor: UIColor? = .lightGray
     open var titleDisabledColor: UIColor? = .lightGray
@@ -37,7 +38,13 @@ open class TextViewRowFormer<T: UITableViewCell>
     deinit {
         cell.formTextView().delegate = nil
     }
-    
+
+    @discardableResult
+    public final func onCharacterCountChanged(_ handler: @escaping ((Int) -> Void)) -> Self {
+        onCharacterCountChanged = handler
+        return self
+    }
+
     @discardableResult
     public final func onTextChanged(_ handler: @escaping ((String) -> Void)) -> Self {
         onTextChanged = handler
@@ -117,6 +124,7 @@ open class TextViewRowFormer<T: UITableViewCell>
     // MARK: Private
     
     fileprivate final var onTextChanged: ((String) -> Void)?
+    fileprivate final var onCharacterCountChanged: ((Int) -> Void)?
     fileprivate final var textColor: UIColor?
     fileprivate final var titleColor: UIColor?
     fileprivate final var _attributedString: NSAttributedString?
@@ -148,7 +156,25 @@ NSObject, UITextViewDelegate where T: TextViewFormableRow {
     init(textViewRowFormer: TextViewRowFormer<T>) {
         self.textViewRowFormer = textViewRowFormer
     }
-    
+
+    fileprivate dynamic func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        // get new text
+        let stringRange = range.stringRangeForText(string: textView.text)
+        let output = textView.text.replacingCharacters(in: stringRange, with: text)
+        
+        // check if there are aby constraints
+        if let limit = textViewRowFormer?.maximumCharactersCount {
+            textViewRowFormer?.onCharacterCountChanged?(min(output.characters.count, limit))
+
+            // chack characters count
+            return output.characters.count <= limit
+        }
+        
+        //
+        textViewRowFormer?.onCharacterCountChanged?(output.characters.count)
+        return true
+    }
+
     fileprivate dynamic func textViewDidChange(_ textView: UITextView) {
         guard let textViewRowFormer = textViewRowFormer else { return }
         if textViewRowFormer.enabled {
@@ -186,5 +212,13 @@ NSObject, UITextViewDelegate where T: TextViewFormableRow {
             titleLabel?.textColor = textViewRowFormer.titleDisabledColor
         }
         textViewRowFormer.isEditing = false
+    }
+}
+
+fileprivate extension NSRange {
+    func stringRangeForText(string: String) -> Range<String.Index> {
+        let start = string.index(string.startIndex, offsetBy: self.location)
+        let end = string.index(start, offsetBy: self.length)
+        return start..<end
     }
 }
