@@ -159,7 +159,7 @@ NSObject, UITextViewDelegate where T: TextViewFormableRow {
 
     fileprivate dynamic func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         // get new text
-        let stringRange = range.stringRangeForText(string: textView.text)
+        guard let stringRange = textView.text.range(from: range) else { return false }
         let output = textView.text.replacingCharacters(in: stringRange, with: text)
         
         // check if there are aby constraints
@@ -215,10 +215,14 @@ NSObject, UITextViewDelegate where T: TextViewFormableRow {
     }
 }
 
-fileprivate extension NSRange {
-    func stringRangeForText(string: String) -> Range<String.Index> {
-        let start = string.index(string.startIndex, offsetBy: self.location)
-        let end = string.index(start, offsetBy: self.length)
-        return start..<end
+fileprivate extension String {
+    func range(from nsRange: NSRange) -> Range<String.Index>? {
+        guard
+            let from16 = utf16.index(utf16.startIndex, offsetBy: nsRange.location, limitedBy: utf16.endIndex),
+            let to16 = utf16.index(utf16.startIndex, offsetBy: nsRange.location + nsRange.length, limitedBy: utf16.endIndex),
+            let from = from16.samePosition(in: self),
+            let to = to16.samePosition(in: self)
+            else { return nil }
+        return from ..< to
     }
 }
