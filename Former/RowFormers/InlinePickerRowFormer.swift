@@ -54,12 +54,12 @@ open class InlinePickerRowFormer<T: UITableViewCell, S>
         onValueChanged = handler
         return self
     }
-
+    
     public final func onEditingBegin(handler: @escaping ((InlinePickerItem<S>, T) -> Void)) -> Self {
         onEditingBegin = handler
         return self
     }
-
+    
     public final func onEditingEnded(handler: @escaping ((InlinePickerItem<S>, T) -> Void)) -> Self {
         onEditingEnded = handler
         return self
@@ -73,8 +73,10 @@ open class InlinePickerRowFormer<T: UITableViewCell, S>
         if pickerItems.isEmpty {
             displayLabel?.text = ""
         } else {
-            displayLabel?.text = pickerItems[selectedRow].title
-            _ = pickerItems[selectedRow].displayTitle.map { displayLabel?.attributedText = $0 }
+            if isEditing {
+                displayLabel?.text = pickerItems[selectedRow].title
+                _ = pickerItems[selectedRow].displayTitle.map { displayLabel?.attributedText = $0 }
+            }
         }
         
         if enabled {
@@ -104,9 +106,9 @@ open class InlinePickerRowFormer<T: UITableViewCell, S>
             $0.pickerItems = pickerItems
             $0.selectedRow = selectedRow
             $0.enabled = enabled
-        }.onValueChanged(valueChanged).update()
+            }.onValueChanged(valueChanged).update()
     }
-
+    
     open override func cellSelected(indexPath: IndexPath) {
         former?.deselect(animated: true)
     }
@@ -116,6 +118,8 @@ open class InlinePickerRowFormer<T: UITableViewCell, S>
             let titleLabel = cell.formTitleLabel()
             let displayLabel = cell.formDisplayLabel()
             
+            if selectedRow == 0 { valueChanged(pickerItem: pickerItems[0]) }
+            
             if titleColor == nil { titleColor = titleLabel?.textColor ?? .black }
             _ = titleEditingColor.map { titleLabel?.textColor = $0 }
             
@@ -123,6 +127,7 @@ open class InlinePickerRowFormer<T: UITableViewCell, S>
                 if displayTextColor == nil { displayTextColor = displayLabel?.textColor ?? .black }
                 _ = displayEditingColor.map { displayLabel?.textColor = $0 }
             }
+            
             isEditing = true
         }
         onEditingBegin?(pickerItems[selectedRow], cell)
